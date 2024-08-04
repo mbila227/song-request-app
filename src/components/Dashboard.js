@@ -3,7 +3,7 @@ import { Card, Button, Alert, ListGroup } from "react-bootstrap";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import QRCode from "qrcode.react";
 import SpotifySearch from "./SpotifySearch";
 
@@ -23,7 +23,8 @@ export default function Dashboard() {
         try {
           const q = query(
             collection(db, "songRequests"),
-            where("userId", "==", currentUser.uid)
+            where("userId", "==", currentUser.uid),
+            orderBy("timestamp", "desc")  // Order by timestamp in descending order
           );
           const querySnapshot = await getDocs(q);
           const requestsData = querySnapshot.docs.map((doc) => doc.data());

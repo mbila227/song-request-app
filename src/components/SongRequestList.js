@@ -6,7 +6,12 @@ const SongRequestList = () => {
   const [requests, setRequests] = useState([]);
 
   useEffect(() => {
-    const q = query(collection(db, 'songRequests'), orderBy('timestamp', 'desc'));
+    // Query to get song requests sorted by timestamp in descending order
+    const q = query(
+      collection(db, "songRequests"),
+      where("userId", "==", currentUser.uid),
+      orderBy("timestamp", "desc")
+    );
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
       const requestsArray = [];
       querySnapshot.forEach((doc) => {
@@ -23,7 +28,7 @@ const SongRequestList = () => {
       <ul>
         {requests.map((request) => (
           <li key={request.id}>
-            {request.name} by {request.artist}
+            <strong>{request.songName}</strong> by {request.artistName}
           </li>
         ))}
       </ul>

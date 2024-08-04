@@ -1,91 +1,110 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import { Button, Form, ListGroup } from 'react-bootstrap';
-import getAuthToken from './spotifyAuth';
-import { useAuth } from '../contexts/AuthContext';
-import { db } from '../firebase';
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import React, { useState } from "react";
+import { Button, ListGroup, Alert, Form } from "react-bootstrap";
+import { db } from "../firebase";
+import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import axios from "axios";
+import getAuthToken from "./spotifyAuth"; // Adjust the import path as needed
 
 const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
-  const [queryText, setQueryText] = useState('');
-  const [results, setResults] = useState([]);
-  const { currentUser } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
 
   const searchSongs = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    const token = await getAuthToken();
+    setError("");
+    setSearchResults([]);
 
     try {
-      const response = await axios.get('https://api.spotify.com/v1/search', {
+      const token = await getAuthToken();
+      const response = await axios.get("https://api.spotify.com/v1/search", {
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
         params: {
-          q: queryText,
-          type: 'track'
-        }
+          q: searchQuery,
+          type: "track",
+        },
       });
-
-      setResults(response.data.tracks.items);
-    } catch (error) {
-      setError('Error fetching songs from Spotify');
-      console.error('Error fetching songs from Spotify: ', error);
+      setSearchResults(response.data.tracks.items);
+    } catch (err) {
+      setError("Failed to fetch songs from Spotify");
+      console.error("Error fetching songs: ", err);
     }
   };
 
-  const addSongRequest = async (track) => {
-    if (!currentUser) return;
+  const handleAddRequest = async (track) => {
+    setError("");
+    setSuccess("");
 
+    // Fetch current requests to check for duplicates
     try {
-      await addDoc(collection(db, 'songRequests'), {
-        userId: currentUser.uid,
+      const q = query(
+        collection(db, "songRequests"),
+        where("userId", "==", userId)
+      );
+      const querySnapshot = await getDocs(q);
+      const existingRequests = querySnapshot.docs.map((doc) => doc.data());
+
+      // Check if the selected track is already in the requests list
+      if (existingRequests.some(
+        (request) => request.songName === track.name && request.artistName === track.artists[0].name
+      )) {
+        setError("Song already queued. Please pick another song.");
+        return;
+      }
+
+      // Add the new request
+      await addDoc(collection(db, "songRequests"), {
+        userId,
         songName: track.name,
         artistName: track.artists[0].name,
-        timestamp: new Date()
+        timestamp: new Date(),
       });
+      setSuccess("Song request added successfully");
 
-      setSuccess('Song request added successfully');
+      // Update the requests list
+      const updatedRequestsSnapshot = await getDocs(q);
+      const updatedRequestsData = updatedRequestsSnapshot.docs.map((doc) => doc.data());
+      setRequests(updatedRequestsData);
 
-      // Fetch updated requests
-      const q = query(collection(db, "songRequests"), where("userId", "==", currentUser.uid));
-      const querySnapshot = await getDocs(q);
-      const requestsData = querySnapshot.docs.map((doc) => doc.data());
-      setRequests(requestsData);
-
-      // Clear results and query after adding song
-      setResults([]);
-      setQueryText('');
+      // Clear the search input and results
+      setSearchQuery("");
+      setSearchResults([]);
     } catch (error) {
-      setError('Error adding song request');
-      console.error('Error adding song request: ', error);
+      setError("Failed to add song request");
+      console.error("Error adding song request: ", error);
     }
   };
 
   return (
     <div>
       <Form onSubmit={searchSongs}>
-        <Form.Group>
+        <Form.Group id="searchQuery">
           <Form.Label>Search for a Song</Form.Label>
           <Form.Control
             type="text"
-            value={queryText}
-            onChange={(e) => setQueryText(e.target.value)}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             required
           />
+          <Button type="submit" className="mt-2">
+            Search
+          </Button>
         </Form.Group>
-        <Button type="submit">Search</Button>
       </Form>
-      {results.length > 0 && (
+
+      {searchResults.length > 0 && (
         <ListGroup className="mt-3">
-          {results.map((track) => (
+          {searchResults.map((track) => (
             <ListGroup.Item key={track.id}>
-              <div>
-                <strong>{track.name}</strong> by {track.artists[0].name}
-                <Button variant="link" onClick={() => addSongRequest(track)}>Add</Button>
-              </div>
+              <strong>{track.name}</strong> by {track.artists[0].name}
+              <Button
+                variant="link"
+                className="float-end"
+                onClick={() => handleAddRequest(track)}
+              >
+                Add Request
+              </Button>
             </ListGroup.Item>
           ))}
         </ListGroup>
@@ -95,4 +114,3 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
 };
 
 export default SpotifySearch;
-
