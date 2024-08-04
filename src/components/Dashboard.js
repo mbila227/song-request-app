@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Card, Button, Alert, ListGroup, Form } from "react-bootstrap";
+import { Card, Button, Alert, ListGroup } from "react-bootstrap";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
-import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import QRCode from "qrcode.react";
+import SpotifySearch from "./SpotifySearch";
 
 export default function Dashboard() {
   const [error, setError] = useState("");
@@ -12,8 +13,6 @@ export default function Dashboard() {
   const [requests, setRequests] = useState([]);
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
-  const [songName, setSongName] = useState("");
-  const [artistName, setArtistName] = useState("");
   const [userUrl, setUserUrl] = useState("");
 
   useEffect(() => {
@@ -50,36 +49,6 @@ export default function Dashboard() {
     }
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-
-    try {
-      await addDoc(collection(db, "songRequests"), {
-        userId: currentUser.uid,
-        songName,
-        artistName,
-        timestamp: new Date(),
-      });
-      setSuccess("Song request added successfully");
-      setSongName("");
-      setArtistName("");
-
-      // Refetch the song requests to update the list
-      const q = query(
-        collection(db, "songRequests"),
-        where("userId", "==", currentUser.uid)
-      );
-      const querySnapshot = await getDocs(q);
-      const requestsData = querySnapshot.docs.map((doc) => doc.data());
-      setRequests(requestsData);
-    } catch (error) {
-      setError("Failed to add song request");
-      console.error("Error adding song request: ", error);
-    }
-  }
-
   if (!currentUser) {
     return (
       <div className="w-100 text-center mt-2">
@@ -101,29 +70,7 @@ export default function Dashboard() {
             <QRCode value={userUrl} />
             <p>{userUrl}</p>
           </div>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group id="songName">
-              <Form.Label>Song Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={songName}
-                onChange={(e) => setSongName(e.target.value)}
-                required
-              />
-            </Form.Group>
-            <Form.Group id="artistName">
-              <Form.Label>Artist Name</Form.Label>
-              <Form.Control
-                type="text"
-                value={artistName}
-                onChange={(e) => setArtistName(e.target.value)}
-                required
-              />
-            </Form.Group>
-            <Button disabled={false} className="w-100 mt-2" type="submit">
-              Add Song
-            </Button>
-          </Form>
+          <SpotifySearch userId={currentUser.uid} />
           <hr />
           {requests.length === 0 ? (
             <p>No song requests found.</p>
@@ -150,4 +97,3 @@ export default function Dashboard() {
 const generateUserUrl = (userId) => {
   return `${window.location.origin}/requests/${userId}`;
 };
-
