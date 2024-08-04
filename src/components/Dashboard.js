@@ -70,7 +70,12 @@ export default function Dashboard() {
             <QRCode value={userUrl} />
             <p>{userUrl}</p>
           </div>
-          <SpotifySearch userId={currentUser.uid} />
+          <SpotifySearch 
+            userId={currentUser.uid} 
+            setRequests={setRequests} 
+            setError={setError} 
+            setSuccess={setSuccess} 
+          />
           <hr />
           {requests.length === 0 ? (
             <p>No song requests found.</p>
