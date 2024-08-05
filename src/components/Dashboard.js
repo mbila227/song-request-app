@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Button, Alert, ListGroup } from "react-bootstrap";
+import { Card, Button, Alert, ListGroup, Image } from "react-bootstrap";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { db } from "../firebase";
@@ -84,7 +84,18 @@ export default function Dashboard() {
             <ListGroup>
               {requests.map((request, index) => (
                 <ListGroup.Item key={index}>
-                  <strong>{request.songName}</strong> by {request.artistName}
+                  <div className="d-flex align-items-center">
+                    {request.albumCover && (
+                      <Image
+                        src={request.albumCover}
+                        rounded
+                        style={{ width: '50px', height: '50px', marginRight: '10px' }}
+                      />
+                    )}
+                    <div>
+                      <strong>{request.songName}</strong> by {request.artistName}
+                    </div>
+                  </div>
                 </ListGroup.Item>
               ))}
             </ListGroup>
