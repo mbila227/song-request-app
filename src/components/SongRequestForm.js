@@ -14,6 +14,7 @@ const SongRequestForm = ({ userId }) => {
         artist,
         userId,
         albumCover: track.album.images[1].url,
+        spotifyUrl,
         timestamp: new Date()
       });
       setName('');

@@ -92,9 +92,20 @@ export default function Dashboard() {
                         style={{ width: '50px', height: '50px', marginRight: '10px' }}
                       />
                     )}
-                    <div>
+                    <div className="flex-grow-1">
                       <strong>{request.songName}</strong> by {request.artistName}
                     </div>
+                    {request.spotifyUrl && (
+                      <Button
+                        variant="link"
+                        className="ms-2"
+                        href={request.spotifyUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Listen on Spotify
+                      </Button>
+                    )}
                   </div>
                 </ListGroup.Item>
               ))}

@@ -96,6 +96,7 @@ const SpotifySearch = ({ userId, setRequests, setError }) => {
         songName: track.name,
         artistName: track.artists[0].name,
         albumCover: track.album.images[1].url,
+        spotifyUrl: track.external_urls.spotify, // Add the Spotify URL here
         timestamp: new Date(),
       });
       setSuccessMessage("Song request added successfully");
@@ -161,9 +162,6 @@ const SpotifySearch = ({ userId, setRequests, setError }) => {
               suggestion: "list-group-item",
             }}
           />
-          <Button type="submit" className="mt-2">
-            Search
-          </Button>
         </Form.Group>
       </Form>
 
