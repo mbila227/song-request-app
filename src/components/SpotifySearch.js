@@ -1,13 +1,52 @@
 import React, { useState } from "react";
-import { Button, ListGroup, Alert, Form } from "react-bootstrap";
+import { Button, ListGroup, Form } from "react-bootstrap";
 import { db } from "../firebase";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import axios from "axios";
 import getAuthToken from "./spotifyAuth"; // Adjust the import path as needed
+import Autosuggest from "react-autosuggest";
 
 const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [selectedTrack, setSelectedTrack] = useState(null);
+
+  const getSuggestions = async (value) => {
+    try {
+      const token = await getAuthToken();
+      const response = await axios.get("https://api.spotify.com/v1/search", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          q: value,
+          type: "track",
+          limit: 5,
+        },
+      });
+      setSuggestions(response.data.tracks.items);
+    } catch (err) {
+      console.error("Error fetching songs: ", err);
+    }
+  };
+
+  const onSuggestionsFetchRequested = ({ value }) => {
+    getSuggestions(value);
+  };
+
+  const onSuggestionsClearRequested = () => {
+    setSuggestions([]);
+  };
+
+  const onSuggestionSelected = (event, { suggestion }) => {
+    setSelectedTrack(suggestion);
+  };
+
+  const handleSearchChange = (e, { newValue }) => {
+    setSearchQuery(newValue);
+    setSelectedTrack(null); // Clear selected track when search query changes
+  };
 
   const searchSongs = async (e) => {
     e.preventDefault();
@@ -36,7 +75,6 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
     setError("");
     setSuccess("");
 
-    // Fetch current requests to check for duplicates
     try {
       const q = query(
         collection(db, "songRequests"),
@@ -45,7 +83,6 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
       const querySnapshot = await getDocs(q);
       const existingRequests = querySnapshot.docs.map((doc) => doc.data());
 
-      // Check if the selected track is already in the requests list
       if (existingRequests.some(
         (request) => request.songName === track.name && request.artistName === track.artists[0].name
       )) {
@@ -53,7 +90,6 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
         return;
       }
 
-      // Add the new request
       await addDoc(collection(db, "songRequests"), {
         userId,
         songName: track.name,
@@ -62,18 +98,32 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
       });
       setSuccess("Song request added successfully");
 
-      // Update the requests list
       const updatedRequestsSnapshot = await getDocs(q);
       const updatedRequestsData = updatedRequestsSnapshot.docs.map((doc) => doc.data());
       setRequests(updatedRequestsData);
 
-      // Clear the search input and results
       setSearchQuery("");
       setSearchResults([]);
+      setSelectedTrack(null);
     } catch (error) {
       setError("Failed to add song request");
       console.error("Error adding song request: ", error);
     }
+  };
+
+  const getSuggestionValue = (suggestion) => suggestion.name;
+
+  const renderSuggestion = (suggestion) => (
+    <div>
+      <strong>{suggestion.name}</strong> by {suggestion.artists[0].name}
+    </div>
+  );
+
+  const inputProps = {
+    placeholder: "Search for a Song",
+    value: searchQuery,
+    onChange: handleSearchChange,
+    required: true,
   };
 
   return (
@@ -81,17 +131,44 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
       <Form onSubmit={searchSongs}>
         <Form.Group id="searchQuery">
           <Form.Label>Search for a Song</Form.Label>
-          <Form.Control
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            required
+          <Autosuggest
+            suggestions={suggestions}
+            onSuggestionsFetchRequested={onSuggestionsFetchRequested}
+            onSuggestionsClearRequested={onSuggestionsClearRequested}
+            getSuggestionValue={getSuggestionValue}
+            renderSuggestion={renderSuggestion}
+            onSuggestionSelected={onSuggestionSelected}
+            inputProps={inputProps}
+            renderInputComponent={(inputProps) => (
+              <Form.Control {...inputProps} />
+            )}
+            theme={{
+              container: "react-autosuggest__container",
+              suggestionsContainer: "react-autosuggest__suggestions-container",
+              suggestionsList: "list-group",
+              suggestion: "list-group-item",
+            }}
           />
           <Button type="submit" className="mt-2">
             Search
           </Button>
         </Form.Group>
       </Form>
+
+      {selectedTrack && (
+        <ListGroup className="mt-3">
+          <ListGroup.Item key={selectedTrack.id}>
+            <strong>{selectedTrack.name}</strong> by {selectedTrack.artists[0].name}
+            <Button
+              variant="link"
+              className="float-end"
+              onClick={() => handleAddRequest(selectedTrack)}
+            >
+              Add Request
+            </Button>
+          </ListGroup.Item>
+        </ListGroup>
+      )}
 
       {searchResults.length > 0 && (
         <ListGroup className="mt-3">
