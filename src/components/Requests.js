@@ -110,9 +110,15 @@ export default function Requests() {
         userId,
         songName: track.name,
         artistName: track.artists[0].name,
+        albumCover: track.album.images[1].url,
         timestamp: new Date(),
       });
       setSuccess("Song request added successfully");
+
+      // Hide the success message after 3 seconds
+      setTimeout(() => {
+        setSuccess("");
+      }, 3000);
 
       // Refetch the song requests to update the list
       const q = query(

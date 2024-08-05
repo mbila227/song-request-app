@@ -1,16 +1,17 @@
 import React, { useState } from "react";
-import { Button, ListGroup, Form, Image } from "react-bootstrap";
+import { Button, ListGroup, Form, Image, Alert } from "react-bootstrap";
 import { db } from "../firebase";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import axios from "axios";
 import getAuthToken from "./spotifyAuth"; // Adjust the import path as needed
 import Autosuggest from "react-autosuggest";
 
-const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
+const SpotifySearch = ({ userId, setRequests, setError }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [selectedTrack, setSelectedTrack] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(""); // Add state for success message
 
   const getSuggestions = async (value) => {
     try {
@@ -73,7 +74,7 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
 
   const handleAddRequest = async (track) => {
     setError("");
-    setSuccess("");
+    setSuccessMessage(""); // Clear previous success message
 
     try {
       const q = query(
@@ -97,7 +98,12 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
         albumCover: track.album.images[1].url,
         timestamp: new Date(),
       });
-      setSuccess("Song request added successfully");
+      setSuccessMessage("Song request added successfully");
+
+      // Hide the success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage("");
+      }, 3000);
 
       const updatedRequestsSnapshot = await getDocs(q);
       const updatedRequestsData = updatedRequestsSnapshot.docs.map((doc) => doc.data());
@@ -160,6 +166,12 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
           </Button>
         </Form.Group>
       </Form>
+
+      {successMessage && (
+        <Alert variant="success" className="mt-3">
+          {successMessage}
+        </Alert>
+      )}
 
       {selectedTrack && (
         <ListGroup className="mt-3">

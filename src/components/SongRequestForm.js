@@ -13,6 +13,7 @@ const SongRequestForm = ({ userId }) => {
         name,
         artist,
         userId,
+        albumCover: track.album.images[1].url,
         timestamp: new Date()
       });
       setName('');
