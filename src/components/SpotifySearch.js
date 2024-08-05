@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button, ListGroup, Form } from "react-bootstrap";
+import { Button, ListGroup, Form, Image } from "react-bootstrap";
 import { db } from "../firebase";
 import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import axios from "axios";
@@ -94,6 +94,7 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
         userId,
         songName: track.name,
         artistName: track.artists[0].name,
+        albumCover: track.album.images[1].url,
         timestamp: new Date(),
       });
       setSuccess("Song request added successfully");
@@ -115,6 +116,11 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
 
   const renderSuggestion = (suggestion) => (
     <div>
+      <Image
+        src={suggestion.album.images[1].url}
+        rounded
+        style={{ width: '50px', height: '50px', marginRight: '10px' }}
+      />
       <strong>{suggestion.name}</strong> by {suggestion.artists[0].name}
     </div>
   );
@@ -158,6 +164,11 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
       {selectedTrack && (
         <ListGroup className="mt-3">
           <ListGroup.Item key={selectedTrack.id}>
+            <Image
+              src={selectedTrack.album.images[1].url}
+              rounded
+              style={{ width: '50px', height: '50px', marginRight: '10px' }}
+            />
             <strong>{selectedTrack.name}</strong> by {selectedTrack.artists[0].name}
             <Button
               variant="link"
@@ -174,6 +185,11 @@ const SpotifySearch = ({ userId, setRequests, setError, setSuccess }) => {
         <ListGroup className="mt-3">
           {searchResults.map((track) => (
             <ListGroup.Item key={track.id}>
+              <Image
+                src={track.album.images[1].url}
+                rounded
+                style={{ width: '50px', height: '50px', marginRight: '10px' }}
+              />
               <strong>{track.name}</strong> by {track.artists[0].name}
               <Button
                 variant="link"
