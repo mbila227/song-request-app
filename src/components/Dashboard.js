@@ -6,6 +6,7 @@ import { db } from "../firebase";
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import QRCode from "qrcode.react";
 import SpotifySearch from "./SpotifySearch";
+import "./Dashboard.css"; // Import the CSS file
 
 export default function Dashboard() {
   const [error, setError] = useState("");
@@ -14,6 +15,7 @@ export default function Dashboard() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const [userUrl, setUserUrl] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState(false); // State to manage dark mode
 
   useEffect(() => {
     if (currentUser) {
@@ -24,7 +26,7 @@ export default function Dashboard() {
           const q = query(
             collection(db, "songRequests"),
             where("userId", "==", currentUser.uid),
-            orderBy("timestamp", "desc")  // Order by timestamp in descending order
+            orderBy("timestamp", "desc")
           );
           const querySnapshot = await getDocs(q);
           const requestsData = querySnapshot.docs.map((doc) => doc.data());
@@ -37,7 +39,15 @@ export default function Dashboard() {
 
       fetchRequests();
     }
-  }, [currentUser]);
+
+    // Apply dark mode class to body when isDarkMode changes
+    document.body.className = isDarkMode ? "dark-mode" : "light-mode";
+
+    return () => {
+      // Clean up the class when the component unmounts
+      document.body.className = "";
+    };
+  }, [currentUser, isDarkMode]);
 
   async function handleLogout() {
     setError("");
@@ -49,6 +59,10 @@ export default function Dashboard() {
       setError("Failed to log out");
     }
   }
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
 
   if (!currentUser) {
     return (
@@ -114,6 +128,9 @@ export default function Dashboard() {
         </Card.Body>
       </Card>
       <div className="w-100 text-center mt-2">
+        <Button variant="link" onClick={toggleDarkMode}>
+          {isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        </Button>
         <Button variant="link" onClick={handleLogout}>
           Log Out
         </Button>
@@ -125,3 +142,4 @@ export default function Dashboard() {
 const generateUserUrl = (userId) => {
   return `${window.location.origin}/requests/${userId}`;
 };
+

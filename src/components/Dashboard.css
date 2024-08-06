@@ -1,0 +1,41 @@
+/* src/Dashboard.css */
+
+/* Light Mode */
+body.light-mode {
+    background-color: #ffffff;
+    color: #000000;
+  }
+  
+  body.light-mode .card {
+    background-color: #f8f9fa;
+  }
+  
+  body.light-mode .alert {
+    background-color: #ffffff;
+    color: #000000;
+  }
+  
+  body.light-mode .btn-link {
+    color: #007bff; /* Link color in light mode */
+  }
+  
+  /* Dark Mode */
+  body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+  }
+  
+  body.dark-mode .card {
+    background-color: #1e1e1e;
+    color: #e0e0e0; /* Text color in cards */
+  }
+  
+  body.dark-mode .alert {
+    background-color: #333;
+    color: #e0e0e0;
+  }
+  
+  body.dark-mode .btn-link {
+    color: #0d6efd; /* Link color in dark mode */
+  }
+  
