@@ -6,7 +6,9 @@ import { db } from "../firebase";
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import QRCode from "qrcode.react";
 import SpotifySearch from "./SpotifySearch";
-import "./Dashboard.css"; // Import the CSS file
+import sunIcon from "../assets/sun.svg";
+import moonIcon from "../assets/moon.svg";
+import "./Dashboard.css";
 
 export default function Dashboard() {
   const [error, setError] = useState("");
@@ -15,7 +17,7 @@ export default function Dashboard() {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const [userUrl, setUserUrl] = useState("");
-  const [isDarkMode, setIsDarkMode] = useState(false); // State to manage dark mode
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -40,11 +42,9 @@ export default function Dashboard() {
       fetchRequests();
     }
 
-    // Apply dark mode class to body when isDarkMode changes
     document.body.className = isDarkMode ? "dark-mode" : "light-mode";
 
     return () => {
-      // Clean up the class when the component unmounts
       document.body.className = "";
     };
   }, [currentUser, isDarkMode]);
@@ -75,6 +75,11 @@ export default function Dashboard() {
 
   return (
     <>
+      <div className="d-flex justify-content-end p-3">
+        <Button variant="link" onClick={toggleDarkMode} className="p-0 border-0">
+          <Image src={isDarkMode ? moonIcon : sunIcon} width={32} height={32} alt="Toggle Dark Mode" />
+        </Button>
+      </div>
       <Card>
         <Card.Body>
           <h2 className="text-center mb-4">Song Requests</h2>
@@ -128,9 +133,6 @@ export default function Dashboard() {
         </Card.Body>
       </Card>
       <div className="w-100 text-center mt-2">
-        <Button variant="link" onClick={toggleDarkMode}>
-          {isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-        </Button>
         <Button variant="link" onClick={handleLogout}>
           Log Out
         </Button>
@@ -142,4 +144,3 @@ export default function Dashboard() {
 const generateUserUrl = (userId) => {
   return `${window.location.origin}/requests/${userId}`;
 };
-
